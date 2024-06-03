@@ -6,13 +6,15 @@ grammaire = """
 %ignore WS
 // %ignore /[ ]/   #ignore les blancs, mais l'arbre ne contient pas l'information de leur existence. problématique du pretty printer. 
 
-VARIABLE : /[a-zA-Z_][a-zA-Z 0-9]*/
+VARIABLE : /(?!p)[a-zA-Z_][a-zA-Z 0-9]*/
+POINTEUR : /p[a-zA-Z_][a-zA-Z 0-9]*/
 NOMBRE : SIGNED_NUMBER
 // NOMBRE : /[1-9][0-9]*/
 OPBINAIRE: /[+*\/&><]/|">="|"-"|">>"  //lark essaie de faire les tokens les plus long possible
 
 lhs: VARIABLE -> lhs_variable
-|"*" VARIABLE -> lhs_pointeur
+| POINTEUR -> lhs_pointeur
+|"*" POINTEUR -> lhs_pointeur_dereference
 
 expression: VARIABLE -> exp_variable
 | NOMBRE         -> exp_nombre
@@ -36,9 +38,9 @@ programme : "main" "(" liste_var ")" "{" commande "return" "(" expression ")" ";
 parser = lark.Lark(grammaire, start = "programme")
 
 t = parser.parse("""main(x,y){
-                 *p=3;
-                 p=&x;
-                 *p=*p+1;
+                 *pA=3;
+                 pA=&x;
+                 *pA=*pA+1;
                  printf(x);
                  return (x);
                 }
@@ -52,7 +54,7 @@ def pretty_printer_liste_var(t):
     return ", ".join([u.value for u in t.children])    
     
 def pretty_printer_lhs(t):
-    if t.data == "lhs_pointeur":
+    if t.data in ("lhs_variable","lhs_pointeur"):
         return t.children[0].value
     return "*"+t.children[0].value
 
