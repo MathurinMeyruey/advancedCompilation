@@ -79,23 +79,23 @@ def pretty_printer_liste_var(t):
     return ", ".join([u.value for u in t.children])    
     
 def pretty_printer_lhs(t):
-    if t.data in ("lhs_int_variable", "lhs_float_variable","lhs_pointeur", "lhs_pointeur_dereference"):
+    if t.data in ("lhs_variable", "lhs_pointeur", "lhs_pointeur_dereference"):
+        return pretty_printer_lhs(t.children[0])
+    elif t.data in ("int_variable", "float_variable", "pointeur_int", "pointeur_float"):
         return t.children[0].value
     return "*"+t.children[0].value
 
 def pretty_printer_expression(t):
-    if t.data in ("exp_entier", "exp_int_variable", "exp_float", "exp_float_variable"):
+    if t.data in ("exp_entier", "exp_int_variable", "exp_float", "exp_float_variable", "exp_pointeur", "int_variable", "float_variable"):
         return t.children[0].value
+    elif t.data in ("exp_pointeur_deref_int", "exp_pointeur_deref_float"):
+        return "*" + t.children[0].value
+    elif t.data == "exp_adresse":
+        return "&"+ pretty_printer_lhs(t.children[0])
     elif t.data in ("exp_bin_int", "exp_bin_float", "exp_bin_pointeur"):
         return pretty_printer_expression(t.children[0])
-    elif t.data == "exp_lhs":
-        return pretty_printer_lhs(t.children[0])
-    elif t.data == "exp_adresse":
-        return "&"+ t.children[0].value
-    elif t.data == "exp_dereferencement":
-        return "*"+t.children[0].value
-    elif t.data=="exp-malloc":
-        return "malloc(" + pretty_printer_expression(t.children[0]) +")"
+    elif t.data=="exp_malloc":
+        return "malloc(" + pretty_printer_expression(t.children[0]) +")"    
     return f"{pretty_printer_expression(t.children[0])} {t.children[1].value} {pretty_printer_expression(t.children[2])}"
 
 def pretty_printer_commande(t):
