@@ -1,28 +1,36 @@
 import lark
 
 grammaire = """
-%import common.SIGNED_NUMBER  #bibliothèque lark.
+%import common.INT
 %import common.WS
 %ignore WS
-// %ignore /[ ]/   #ignore les blancs, mais l'arbre ne contient pas l'information de leur existence. problématique du pretty printer. 
 
-VARIABLE : /(?!p)[a-zA-Z_][a-zA-Z 0-9]*/
+INT_VARIABLE : /(?!f)[a-zA-Z_][a-zA-Z 0-9]*/
+FLOAT_VARIABLE : /f[a-zA-Z_][a-zA-Z0-9]*/
+ENTIER : INT
+FLOAT : /-?\d+\.\d+/
 POINTEUR : /p[a-zA-Z_][a-zA-Z 0-9]*/
-NOMBRE : SIGNED_NUMBER
-// NOMBRE : /[1-9][0-9]*/
 OPBINAIRE: /[+*\/&><]/|">="|"-"|">>"  //lark essaie de faire les tokens les plus long possible
 
-lhs: VARIABLE -> lhs_variable
+lhs: INT_VARIABLE -> lhs_int_variable
+| FLOAT_VARIABLE -> lhs_float_variable
 | POINTEUR -> lhs_pointeur
 |"*" POINTEUR -> lhs_pointeur_dereference
 
-expression: VARIABLE -> exp_variable
-| NOMBRE         -> exp_nombre
-| expression OPBINAIRE expression -> exp_binaire
+expression: exp_binaire_int -> exp_bin_int
+| exp_binaire_float -> exp_bin_float
 | "&" VARIABLE -> exp_adresse
 | "*" VARIABLE -> exp_dereferencement
 | "malloc" "(" expression ")" -> exp_malloc
 | lhs -> exp_lhs
+
+exp_binaire_int : INT_VARIABLE -> exp_int_variable
+| ENTIER -> exp_entier
+| exp_binaire_int OPBINAIRE exp_binaire_int -> exp_bin_rec
+
+exp_binaire_float : FLOAT_VARIABLE -> exp_float_variable
+| FLOAT -> exp_float
+| expression OPBINAIRE exp_binaire_float -> exp_bin_float_rec
 
 commande : lhs "=" expression ";"-> com_asgt //les exp entre "" ne sont pas reconnues dans l'arbre syntaxique
 | "printf" "(" expression ")" ";" -> com_printf
@@ -31,18 +39,25 @@ commande : lhs "=" expression ";"-> com_asgt //les exp entre "" ne sont pas reco
 | "if" "(" expression ")" "{" commande "}" "else" "{" commande "}" -> com_if
 
 liste_var :                -> liste_vide
-| VARIABLE ("," VARIABLE)* -> liste_normale
+| (INT_VARIABLE |FLOAT_VARIABLE) ("," (INT_VARIABLE | FLOAT_VARIABLE))* -> liste_normale
+
 programme : "main" "(" liste_var ")" "{" commande "return" "(" expression ")" ";" "}" -> prog_main // ressemble à une déclaration de fonction
 """
 
 parser = lark.Lark(grammaire, start = "programme")
 
-t = parser.parse("""main(x,y){
+t = parser.parse("""main(x,fy,z){
+                  while(x) {
+                    fy = fy+1.0;
+                    printf(fy);
+                    }
+                  z=1;
+                  printf(z);
                  *pA=3;
                  pA=&x;
                  *pA=*pA+1;
                  printf(x);
-                 return (x);
+                 return (fy);
                 }
                  """)
 print(t)
@@ -54,13 +69,15 @@ def pretty_printer_liste_var(t):
     return ", ".join([u.value for u in t.children])    
     
 def pretty_printer_lhs(t):
-    if t.data in ("lhs_variable","lhs_pointeur"):
+    if t.data in ("lhs_int_variable", "lhs_float_variable","lhs_pointeur"):
         return t.children[0].value
     return "*"+t.children[0].value
 
 def pretty_printer_expression(t):
-    if t.data in ("exp_variable", "exp_nombre"):
+    if t.data in ("exp_entier", "exp_int_variable", "exp_float", "exp_float_variable"):
         return t.children[0].value
+    elif t.data in ("exp_bin_int", "exp_bin_float"):
+        return pretty_printer_expression(t.children[0])
     elif t.data == "exp_lhs":
         return pretty_printer_lhs(t.children[0])
     elif t.data == "exp_adresse":
