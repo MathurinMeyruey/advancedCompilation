@@ -56,22 +56,20 @@ programme : "main" "(" liste_var ")" "{" commande "return" "(" expression ")" ";
 
 parser = lark.Lark(grammaire, start = "programme")
 
-t = parser.parse("""main(x,fy,z){
-                while(x) {
-                    fy = fy+1.0;
-                    printf(fy);
-                }
-                z=1;
-                  printf(z);
-                 *piA=3;
-                 pA=&x;
-                 *piA=*piA+1;
-                 printf(x);
-                 return (fy);
-                }
-                 """)
-print(t)
-
+#t = parser.parse("""main(x,fy,z){
+#                while(x) {
+#                    fy = fy+1.0;
+#                    printf(fy);
+#                }
+#                z=1;
+#                  printf(z);
+#                 *piA=3;
+#                 pA=&x;
+#                 *piA=*piA+1;
+#                 printf(x);
+#                 return (fy);
+#                }
+#                 """)
 
 def pretty_printer_liste_var(t):
     if t.data == "liste_vide" :
@@ -104,16 +102,16 @@ def pretty_printer_commande(t):
     if t.data == "com_printf":
         return f"printf ({pretty_printer_expression(t.children[0])}) ;"
     if t.data == "com_while":
-        return "while (%s){ %s}" % (pretty_printer_expression(t.children[0]), pretty_printer_commande(t.children[1]))
+        return "while (%s) {\n%s\n}\n" % (pretty_printer_expression(t.children[0]), pretty_printer_commande(t.children[1]))
     if t.data == "com_if":
-        return "if (%s){ %s} else { %s}" % (pretty_printer_expression(t.children[0]), pretty_printer_commande(t.children[1]), pretty_printer_commande(t.children[2]))
+        return "if (%s) {\n %s\n} else {\n%s\n}\n" % (pretty_printer_expression(t.children[0]), pretty_printer_commande(t.children[1]), pretty_printer_commande(t.children[2]))
     if t.data == "com_sequence":
         return "\n".join([pretty_printer_commande(u) for u in t.children])
 
 def pretty_print(t):
-    return  "main (%s) { %s return (%s); }" % (pretty_printer_liste_var(t.children[0]), 
+    return  "main (%s) {\n%s return (%s);\n}" % (pretty_printer_liste_var(t.children[0]), 
                                                pretty_printer_commande(t.children[1]),
                                                 pretty_printer_expression( t.children[2]))
 
-print(t)
-print(pretty_print(t))
+#print(t)
+#print(pretty_print(t))
