@@ -9,31 +9,38 @@ INT_VARIABLE : /(?!f)[a-zA-Z_][a-zA-Z 0-9]*/
 FLOAT_VARIABLE : /f[a-zA-Z_][a-zA-Z0-9]*/
 ENTIER : INT
 FLOAT : /-?\d+\.\d+/
-POINTEUR : /p[a-zA-Z_][a-zA-Z 0-9]*/
-OPBINAIRE: /[+*\/&><]/|">="|"-"|">>"  //lark essaie de faire les tokens les plus long possible
+OPBINAIRE: /[+*\/&><]/|">="|"-"|">>"  
+POINTEUR_INT : /pi[a-zA-Z_][a-zA-Z 0-9]*/
+POINTEUR_FLOAT : /pf[a-zA-Z_][a-zA-Z 0-9]*/
 
 variable : INT_VARIABLE -> int_variable
 | FLOAT_VARIABLE -> float_variable
 
-lhs: INT_VARIABLE -> lhs_int_variable
-| FLOAT_VARIABLE -> lhs_float_variable
-| POINTEUR -> lhs_pointeur
-|"*" POINTEUR -> lhs_pointeur_dereference
+pointeur : POINTEUR_INT -> pointeur_int
+| POINTEUR_FLOAT -> pointeur_float
+
+lhs: variable -> lhs_variable
+| pointeur -> lhs_pointeur
+|"*" pointeur -> lhs_pointeur_dereference
 
 expression: exp_binaire_int -> exp_bin_int
 | exp_binaire_float -> exp_bin_float
-| "&" variable -> exp_adresse
-| "*" variable -> exp_dereferencement
-| "malloc" "(" expression ")" -> exp_malloc
-| lhs -> exp_lhs
+| exp_binaire_pointeur -> exp_bin_pointeur
+| "malloc" "(" ENTIER ")" -> exp_malloc
 
 exp_binaire_int : INT_VARIABLE -> exp_int_variable
 | ENTIER -> exp_entier
 | exp_binaire_int OPBINAIRE exp_binaire_int -> exp_bin_rec
+| "*" POINTEUR_INT -> exp_pointeur_deref_int
 
 exp_binaire_float : FLOAT_VARIABLE -> exp_float_variable
 | FLOAT -> exp_float
-| expression OPBINAIRE exp_binaire_float -> exp_bin_float_rec
+| (exp_binaire_float | exp_binaire_int) OPBINAIRE exp_binaire_float -> exp_bin_float_rec
+| "*" POINTEUR_FLOAT -> exp_pointeur_deref_float
+
+exp_binaire_pointeur : pointeur -> exp_pointeur
+| "&" variable -> exp_adresse
+| exp_binaire_pointeur OPBINAIRE exp_binaire_int -> exp_binaire_rec
 
 commande : lhs "=" expression ";"-> com_asgt //les exp entre "" ne sont pas reconnues dans l'arbre syntaxique
 | "printf" "(" expression ")" ";" -> com_printf
@@ -50,15 +57,15 @@ programme : "main" "(" liste_var ")" "{" commande "return" "(" expression ")" ";
 parser = lark.Lark(grammaire, start = "programme")
 
 t = parser.parse("""main(x,fy,z){
-                  while(x) {
+                while(x) {
                     fy = fy+1.0;
                     printf(fy);
-                    }
-                  z=1;
+                }
+                z=1;
                   printf(z);
-                 *pA=3;
+                 *piA=3;
                  pA=&x;
-                 *pA=*pA+1;
+                 *piA=*piA+1;
                  printf(x);
                  return (fy);
                 }
@@ -72,14 +79,14 @@ def pretty_printer_liste_var(t):
     return ", ".join([u.value for u in t.children])    
     
 def pretty_printer_lhs(t):
-    if t.data in ("lhs_int_variable", "lhs_float_variable","lhs_pointeur"):
+    if t.data in ("lhs_int_variable", "lhs_float_variable","lhs_pointeur", "lhs_pointeur_dereference"):
         return t.children[0].value
     return "*"+t.children[0].value
 
 def pretty_printer_expression(t):
     if t.data in ("exp_entier", "exp_int_variable", "exp_float", "exp_float_variable"):
         return t.children[0].value
-    elif t.data in ("exp_bin_int", "exp_bin_float"):
+    elif t.data in ("exp_bin_int", "exp_bin_float", "exp_bin_pointeur"):
         return pretty_printer_expression(t.children[0])
     elif t.data == "exp_lhs":
         return pretty_printer_lhs(t.children[0])
@@ -108,5 +115,5 @@ def pretty_print(t):
                                                pretty_printer_commande(t.children[1]),
                                                 pretty_printer_expression( t.children[2]))
 
+print(t)
 print(pretty_print(t))
-#print(t)

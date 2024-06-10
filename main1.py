@@ -1,6 +1,6 @@
 import sys
-import Parser
-import Compile
+import Parser1 as Parser
+import Compile1 as Compile
 
 ## comment compiler?
 ## python3 main.py hello.c hello.asm
