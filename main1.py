@@ -2,12 +2,6 @@ import sys
 import Parser1 as Parser
 import Compile1 as Compile
 
-## comment compiler?
-## python3 main.py hello.c hello.asm
-##nasm -felf64 hello.asm
-##gcc -no-pie hello.o
-##./a.out 12 34
-
 def get_source(filename : str) -> str:
     """
     get the source code contained in filename

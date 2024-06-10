@@ -24,8 +24,8 @@ mov [Y], rax
             loop1 : 
                 cmp rax, 0
                 jz fin1
-                mov [X], rax 
-mov [Y], rax 
+                mov [X], rax
+mov [Y], rax
 
                 jmp loop1
             fin1 :

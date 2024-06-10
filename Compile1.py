@@ -32,7 +32,12 @@ def variable_declaration(ast) :
     vars = set()
     if ast.data != "liste_vide":
         for child in ast.children:
-            asmVar += f"{child.value}: dq 0\n"
+            if 'f' in child.value:
+                asmVar += f"{child.value}: dq 0\n"
+            elif 'pi' in child.value or 'pf' in child.value:
+                asmVar += f"{child.value}: dq 0\n"
+            else:
+                asmVar += f"{child.value}: dq 0\n"
             vars.add(child.value)
     return asmVar, vars
 
@@ -102,7 +107,9 @@ def compilSequence(ast):
 
 def compilAsgt(ast):
     asm = compilExpression(ast.children[1])
-    asm += f"mov [{ast.children[0].value}], rax \n"
+    lhs_variable = ast.children[0].children[0]
+    variable_name = lhs_variable.children[0].value
+    asm += f"mov [{variable_name}], rax\n"
     return asm
 
 def compilPrintf(ast):
@@ -126,4 +133,15 @@ def compilExpression(ast):
                 pop rbx
                 {op2asm[ast.children[1].value]}
                 """
+    elif ast.data == "exp_pointeur":
+        return f"mov rax, [{ast.children[0].value}]\n"
+    elif ast.data == "exp_pointeur_deref_int" or ast.data == "exp_pointeur_deref_float":
+        return f"mov rax, [{ast.children[0].value}]\n"
+    elif ast.data == "exp_adresse":
+        return f"lea rax, [{ast.children[0].value}]\n"
+    elif ast.data == "exp_malloc":
+        return f"""
+                mov rdi, {ast.children[0].value}
+                call malloc
+                """    
     return ""
