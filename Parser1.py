@@ -12,6 +12,9 @@ FLOAT : /-?\d+\.\d+/
 POINTEUR : /p[a-zA-Z_][a-zA-Z 0-9]*/
 OPBINAIRE: /[+*\/&><]/|">="|"-"|">>"  //lark essaie de faire les tokens les plus long possible
 
+variable : INT_VARIABLE -> int_variable
+| FLOAT_VARIABLE -> float_variable
+
 lhs: INT_VARIABLE -> lhs_int_variable
 | FLOAT_VARIABLE -> lhs_float_variable
 | POINTEUR -> lhs_pointeur
@@ -19,8 +22,8 @@ lhs: INT_VARIABLE -> lhs_int_variable
 
 expression: exp_binaire_int -> exp_bin_int
 | exp_binaire_float -> exp_bin_float
-| "&" VARIABLE -> exp_adresse
-| "*" VARIABLE -> exp_dereferencement
+| "&" variable -> exp_adresse
+| "*" variable -> exp_dereferencement
 | "malloc" "(" expression ")" -> exp_malloc
 | lhs -> exp_lhs
 
