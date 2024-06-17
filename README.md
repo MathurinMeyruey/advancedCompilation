@@ -17,17 +17,20 @@ pour l'input 1 1 2 3, on attend l'output 2 1 0 2
 
 EXEMPLE DE CODE : 
 
-Le fichier hello1.c consiste en un exemple de code pour tester notre compilateur.
+Les fichiers hello1.c et hello2.c consistent en des exemples de code pour tester notre compilateur.
 
 
 AVANCEMENT DU PROJET : 
 
-Actuellement, le pretty printer marche et le fichier Parser1 semble correct. Cependant, l'exécution du fichier Compile1 renvoie des erreurs : on obtinet 3 2 2 2 et non pas 2 1 0 2 comme output.
+Actuellement, le pretty printer marche et le fichier Parser1 semble correct. Cependant, l'exécution du fichier Compile1 renvoie des erreurs, probablement au niveau de la gestion des flottants : pour hello1.c on obtient 3 2 2 2 et non pas 2 1 0 2 comme output.
+Par contre, pour hello2.c, l'execution fonctionne bien.
 
 
 NOS PRINCIPES DE COMPILATION :
 
 Nous avons codé dans notre grammaire plusieurs types de bases : INT_VARIABLE, FLOAT_VARIABLE, ENTIER, FLOAT, OPBINAIRE, POINTEUR_INT et POINTEUR_FLOAT.
+
+Les deux types de variables et de pointeurs sont rassemblés dans des surtypes "variable" et "pointeur"
 
 Nos autres types principaux sont programme, liste_var, commande, exp_binaire et lhs.
 

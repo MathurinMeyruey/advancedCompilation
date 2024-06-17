@@ -43,7 +43,13 @@ mov rdi, long_format
 xor rax, rax 
 call printf 
 mov [piA], rax
+lea rax, [x]
 mov [piA], rax
+mov rcx, [piA]
+mov rax, [rcx]
+xor rcx, rcx
+mov rbx, 1
+add rax, rbx
 mov [piA], rax
 mov rsi, rax 
 mov rdi, long_format 

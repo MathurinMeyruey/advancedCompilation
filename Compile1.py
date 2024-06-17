@@ -109,7 +109,13 @@ def compilAsgt(ast):
     asm = compilExpression(ast.children[1])
     lhs_variable = ast.children[0].children[0]
     variable_name = lhs_variable.children[0].value
-    asm += f"mov [{variable_name}], rax\n"
+    if lhs_variable.data == "lhs_pointeur_dereference":
+        asm += f"mov rax, QWORD PTR [{variable_name}]\n"
+        asm += f"mov DWORD PTR [rax], edx\n"
+    elif lhs_variable.data == "lhs_pointeur":
+        asm += f"mov QWORD PTR [{variable_name}], rax\n"
+    else:
+        asm += f"mov [{variable_name}], rax\n"
     return asm
 
 def compilPrintf(ast):
@@ -121,27 +127,69 @@ def compilPrintf(ast):
     return asm
 
 def compilExpression(ast):
-    if ast.data == "exp_variable":
-        return f"mov rax, [{ast.children[0].value}]\n"
-    elif ast.data ==  "exp_nombre":
-        return f"mov rax, {ast.children[0].value}\n"
-    elif ast.data == "exp_binaire":
-        return f"""
-                {compilExpression(ast.children[2])}
-                push rax
-                {compilExpression(ast.children[0])}
-                pop rbx
-                {op2asm[ast.children[1].value]}
-                """
+    if ast.data == "exp_bin_int":
+        return compilBinInt(ast)
+    elif ast.data == "exp_bin_float":
+        return compilBinFloat(ast)
     elif ast.data == "exp_pointeur":
-        return f"mov rax, [{ast.children[0].value}]\n"
-    elif ast.data == "exp_pointeur_deref_int" or ast.data == "exp_pointeur_deref_float":
-        return f"mov rax, [{ast.children[0].value}]\n"
+        return f"mov rax, [{ast.children[0].children[0].value}]\n"
     elif ast.data == "exp_adresse":
-        return f"lea rax, [{ast.children[0].value}]\n"
+        return f"lea rax, [{ast.children[0].children[0].value}]\n"
     elif ast.data == "exp_malloc":
         return f"""
                 mov rdi, {ast.children[0].value}
                 call malloc
                 """    
     return ""
+
+def compilBinInt(ast):
+    asm = ""
+    if ast.children[0].data == "exp_bin_rec":
+        tempoAst = ast.children[0]
+        if tempoAst.children[0].data == "exp_int_variable":
+            print(tempoAst.children[0].children[0].value)
+            asm += f"mov rax, [{tempoAst.children[0].children[0].value}]\n"
+        elif tempoAst.children[0].data == "exp_entier":
+            asm += f"mov rax, {tempoAst.children[0].children[0].value}\n"
+        elif tempoAst.children[0].data == "exp_pointeur_deref_int":
+            asm += f"mov rcx, [{tempoAst.children[0].children[0].value}]\n"
+            asm += f"mov rax, [rcx]\n"
+            asm += f"xor rcx, rcx\n"
+        if tempoAst.children[2].data == "exp_int_variable":
+            print(tempoAst.children[2].children[0].value)
+            asm += f"mov rbx, [{tempoAst.children[2].children[0].value}]\n"
+        elif tempoAst.children[2].data == "exp_entier":
+            asm += f"mov rbx, {tempoAst.children[2].children[0].value}\n"
+        elif tempoAst.children[2].data == "exp_pointeur_deref_int":
+            asm += f"mov rcx, [{tempoAst.children[2].children[0].value}]\n"
+            asm += f"mov rbx, [rcx]\n"
+            asm += f"xor rcx, rcx\n"
+        asm += op2asm[tempoAst.children[1].value] + "\n"
+    return asm
+
+def compilBinFloat(ast):
+    asm = ""
+    if ast.children[0].data == "exp_bin_rec":
+        tempoAst = ast.children[0]
+        if tempoAst.children[0].data == "exp_float_variable":
+            print(tempoAst.children[0].children[0].value)
+            asm += f"mov rax, [{tempoAst.children[0].children[0].value}]\n"
+        elif tempoAst.children[0].data == "exp_float":
+            asm += f"mov rax, {tempoAst.children[0].children[0].value}\n"
+        elif tempoAst.children[0].data == "exp_pointeur_deref_float":
+            asm += f"mov rcx, [{tempoAst.children[0].children[0].value}]\n"
+            asm += f"mov rax, [rcx]\n"
+            asm += f"xor rcx, rcx\n"
+        if tempoAst.children[2].data == "exp_float_variable":
+            print(tempoAst.children[2].children[0].value)
+            asm += f"mov rbx, [{tempoAst.children[2].children[0].value}]\n"
+        elif tempoAst.children[2].data == "exp_float":
+            asm += f"mov rbx, {tempoAst.children[2].children[0].value}\n"
+        elif tempoAst.children[2].data == "exp_pointeur_deref_float":
+            asm += f"mov rcx, [{tempoAst.children[2].children[0].value}]\n"
+            asm += f"mov rbx, [rcx]\n"
+            asm += f"xor rcx, rcx\n"
+        asm += op2asm[tempoAst.children[1].value] + "\n"
+    return asm
+
+        
