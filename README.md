@@ -2,7 +2,7 @@
 Advanced Compilation project
 
 
-POUR COMPILER : 
+POUR COMPILER (avec l'exemple hello1) : 
 
 python3 main1.py hello1.c hello1.asm
 
@@ -22,8 +22,8 @@ Les fichiers hello1.c et hello2.c consistent en des exemples de code pour tester
 
 AVANCEMENT DU PROJET : 
 
-Actuellement, le pretty printer marche et le fichier Parser1 semble correct. Cependant, l'exécution du fichier Compile1 renvoie des erreurs, probablement au niveau de la gestion des flottants : pour hello1.c on obtient 3 2 2 2 et non pas 2 1 0 2 comme output.
-Par contre, pour hello2.c, l'execution fonctionne bien.
+Actuellement, le pretty printer marche et le fichier Parser1 semble correct. Cependant, l'exécution du fichier Compile1 renvoie des erreurs au niveau de la gestion des flottants : pour hello1.c on obtient 3 2 2 2 et non pas 2 1 0 2 comme output.
+Par contre, pour hello2.c, l'execution fonctionne bien.Ces probleme sont dus nottament à la non utilisation de movss et addss.
 
 
 NOS PRINCIPES DE COMPILATION :
